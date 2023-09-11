@@ -18,6 +18,8 @@ class SQLService:
         self.inventory = "item"
         self.user_session_cart="tbl_user_session_cart"
         self.metadata = "tbl_payment_metadata"
+        self.cart="tbl_cart"
+        self.billing_table= "tbl_bill"
 
     def table_exists(self, table_name):
         logging.info("Checking if the table exists...")
@@ -38,11 +40,11 @@ class SQLService:
                 logging.info("strating")
                 with self.engine.begin() as conn:
                     session = sessionmaker(bind=conn)()
-
+                    print(message)
                     metadata = []
                     query = SQLUtils.check_if_order_id_exist(self.metadata, message["order_id"])
                     query_response = session.execute(sa.text(query))
-
+                    #print(json.loads(message["cart_details"])[0]["cart"])
                     for response in query_response:
                         metadata.append(response)
 
@@ -76,7 +78,7 @@ class SQLService:
                         conn.execute(sa.text(user_session_cart_update_query))
 
                         logging.info("Fetching from Item table")
-
+                        ldts = HelperUtils.get_timestamp()
                         for element in json.loads(message["full_order"]):
 
                             item_count = []
@@ -87,16 +89,31 @@ class SQLService:
                                 item_count.append(count)
 
                             updated_count = HelperUtils.tupple_to_dict(item_count, ["count"])[0]["count"] - int(element["count"])
-                            ldts = HelperUtils.get_timestamp()
+
                             update_query = SQLUtils.update_inventory(
                                 self.inventory,
                                 ldts,
                                 updated_count,
                                 element["item_id"]
 
-                            ).with_for_update()
-                            conn.execute(sa.text(update_query))
+                            )
 
+                            conn.execute(sa.text(update_query))
+                        print("ekkkkk")
+                        for cart in json.loads(message["cart_details"]):
+                            print("kkk",type(cart))
+                            update_query = SQLUtils.update_cart(
+                                self.cart,
+                                cart["cart"],
+                                ldts
+                            )
+                            conn.execute(sa.text(update_query))
+                        bill_values = [str(value) for value in message.values()]
+                        bill_metadata= tuple(bill_values)
+                        insert_query = SQLUtils.insert_metadata(self.billing_table, bill_metadata)
+                        response = conn.execute(sa.text(insert_query))
+                        if response.__dict__["rowcount"] == 0:
+                            raise Exception("insert to billing failed")
                         order_ids = (message["order_id"],0)
                         metadata_query = SQLUtils.insert_metadata(self.metadata, order_ids)
                         response = conn.execute(sa.text(metadata_query))

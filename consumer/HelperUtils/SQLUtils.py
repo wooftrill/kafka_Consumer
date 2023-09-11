@@ -33,6 +33,10 @@ class SQLUtils:
     def insert_metadata(table_name, args):
         return f"INSERT INTO external.{table_name} VALUES {args};"
 
+    @staticmethod
+    def update_cart(table_name,cart_id,ldts):
+        return f"update external.{table_name} set is_active=0,ldts={ldts} where cart_id='{cart_id}' and is_active=1"
+
 
 
 

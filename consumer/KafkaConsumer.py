@@ -9,12 +9,12 @@ logging.getLogger().setLevel(logging.INFO)
 consumer_client = KafkaConsumer(
     'wt-topic-0',
     group_id='wt-consumers',
-    bootstrap_servers=["104.197.228.156:9092"],
+    bootstrap_servers=["34.16.156.238:9092"],
     auto_offset_reset='earliest',  # Start from the beginning of the topic
     enable_auto_commit=False  # Disable auto-commit
 )
 
-produce_client= KafkaProducer(bootstrap_servers=["104.197.228.156:9092"], acks=1)
+produce_client= KafkaProducer(bootstrap_servers=["34.16.156.238:9092"], acks=1)
 
 logging.info("strating processing...")
 try:
@@ -22,6 +22,7 @@ try:
         for msg in consumer_client:
             message= msg.value.decode('utf-8')
             json_obj=json.loads(message)
+            print(json_obj)
             if SQLService().update_sql_tables(json_obj):
                 logging.info("Order Id {} is successfully pushed".format(json_obj["order_id"]))
             else:
