@@ -9,12 +9,12 @@ logging.getLogger().setLevel(logging.INFO)
 consumer_client = KafkaConsumer(
     'wt-topic-0',
     group_id='wt-consumers',
-    bootstrap_servers=["34.16.156.238:9092"],
+    bootstrap_servers=["localhost:9092"],
     auto_offset_reset='earliest',  # Start from the beginning of the topic
     enable_auto_commit=False  # Disable auto-commit
 )
 
-produce_client= KafkaProducer(bootstrap_servers=["34.16.156.238:9092"], acks=1)
+produce_client= KafkaProducer(bootstrap_servers=["localhost:9092"], acks=1)
 
 logging.info("strating processing...")
 try:
